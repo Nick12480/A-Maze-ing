@@ -1,3 +1,6 @@
+import os
+
+
 def parse_config(filepath: str) -> dict:
     """Parse a configuration file into a dictionary.
 
@@ -81,6 +84,24 @@ def convert_config(config: dict) -> tuple:
     return width, height, entry_coord, exit_coord, output_file, perfect
 
 
+def get_terminal_size(fallback_cols: int = 80,
+                      fallback_rows: int = 24) -> tuple[int, int]:
+    """Get the current terminal dimensions with a fallback.
+
+    Args:
+        fallback_cols: Columns to use if terminal size cannot be detected.
+        fallback_rows: Rows to use if terminal size cannot be detected.
+
+    Returns:
+        A tuple of (columns, rows).
+    """
+    try:
+        size = os.get_terminal_size()
+        return size.columns, size.lines
+    except OSError:
+        return fallback_cols, fallback_rows
+
+
 def process_config(width: int, height: int,
                    entry: tuple, exit: tuple):
     """Validate that entry and exit coordinates are within maze bounds
@@ -93,26 +114,31 @@ def process_config(width: int, height: int,
         exit: Exit coordinates as (col, row).
     Raises:
         ValueError: If width or height is less then 2
-        valueError: If width is larger then 146 or height larger then 75 \n
+        valueError: If width or height is larger then the of theterminal\n
             (max terminal return without graphical errors in animation)\n
-                    (in full screen)
+                (the size is automatically adjusted to the terminal size)
         ValueError: If entry or exit lies outside the maze boundaries.
         ValueError: If entry and exit coordinates are exactly the same
     """
-    if width <= 1:
-        raise ValueError("WIDTH must be larger than 1.")
-    if height <= 1:
-        raise ValueError("HEIGHT must be larger than 1.")
-    if width > 146:
-        raise ValueError("WIDTH must be smaller than 147")
-    if height > 74:
-        raise ValueError("HEIGHT must be smaller than 75")
+    term_cols, term_rows = get_terminal_size()
+
+    constraints = [
+        (width <= 1, "WIDTH must be larger than 1."),
+        (height <= 1, "HEIGHT must be larger than 1."),
+        (width > (term_cols - 1) // 2,
+         f"WIDTH must be smaller than {(term_cols + 1) // 2 + 1}"),
+        (height + 2 > term_rows,
+         f"HEIGHT must be smaller than {term_rows - 1}"),
+        (entry == exit,       "ENTRY & EXIT can not overlap"),
+    ]
+    for condition, msg in constraints:
+        if condition:
+            raise ValueError(msg)
+
     for name, coord in [('Entry', entry), ('Exit', exit)]:
         col, row = coord
-        if col < 0 or col > width or row < 0 or row > height:
+        if col < 0 or col >= width or row < 0 or row >= height:
             raise ValueError(f"{name} {coord} is out of bounds.")
-    if entry == exit:
-        raise ValueError("ENTRY & EXIT can not overlap")
 
 
 def process_maze(width: int, height: int, entry: tuple,
