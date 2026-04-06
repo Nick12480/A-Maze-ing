@@ -17,7 +17,7 @@ def timer(func):
         start = time.time()
         func(*args, **kwargs)
         end = time.time()
-        print(f"finished in {round(end-start, 3)}")
+        print(f"finished in {round(end-start, 3)}s")
     return wrapper
 
 
