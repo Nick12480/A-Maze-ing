@@ -1,4 +1,4 @@
-NAME := a_maze_ing.py
+NAME := A-Maze-ing/a_maze_ing.py
 FLAKE8 := uv run -m flake8
 FLAKE8_FLAGS := --count --show-source --filename [./*.py]
 MYPY := uv run mypy
@@ -6,16 +6,20 @@ MYPY_FLAGS := --warn-return-any \
 			  --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs \
 			  --check-untyped-defs
 UV_VENV := uv sync
+FILE := A-Maze-ing/config.txt
+OUT := output_maze.txt
 
 
 install:
 	$(UV_VENV)
 
 run:
-	uv run $(NAME)
+	uv run $(NAME) $(FILE)
 
 debug:
 	
+validate:
+	uv run output_validator.py $(OUT)
 
 clean:
 	rm -rf __pycache__ .mypy_cache
