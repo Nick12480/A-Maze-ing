@@ -98,7 +98,7 @@ def parse_config(filepath: str) -> dict:
     config: dict = {}
     try:
         with open(filepath, 'r') as f:
-            config = {key.strip(): value.strip() for key, value in (line.split("=") for line in f if "=" in line) if not key.startswith("#")}
+            config = {key.strip(): value.strip() for key, value in (line.split("=", 1) for line in f if "=" in line) if not key.startswith("#")}
     except FileNotFoundError:
         print(f"Error: File '{filepath}' not found.")
         raise
