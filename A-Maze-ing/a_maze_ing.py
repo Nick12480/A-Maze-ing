@@ -25,15 +25,35 @@ import os
 import sys
 import random
 from typing_extensions import TypedDict
+from typing import Optional
 
-from pydantic import model_validator, ValidationError, Field, TypeAdapter, BaseModel
+from pydantic import model_validator, ValidationError, Field, TypeAdapter, BaseModel, field_validator
 
 from algorithm import Maze
 import algorithm as St
 
 
 class Validation(BaseModel):
-    HEIGHT: int = Field(..., ge=1)
+    HEIGHT: int = Field(..., ge=2)
+    WIDTH: int = Field(..., ge=2)
+    WEIGHT: int = Field(default=1, ge=1, le=10)
+    SEED: Optional[int] = Field(default=None, ge=0)
+    ANIMATE: Optional[bool] = Field(default=True)
+    ENTRY: list | tuple = Field(...)
+    EXIT: list | tuple = Field(...)
+    OUTPUT_FILE: Optional[str] = Field(default='output_maze.txt')
+    PERFECT: Optional[bool] = Field(default=False)
+    ALGORITHM: Optional[str] = Field(default='sidewinder')
+
+    @field_validator("HEIGHT", "WIDTH", "WEIGHT", "SEED", mode="before")
+    @classmethod
+    def cast_to_int(cls, value):
+        if value is None:
+            return value
+        return int(value)
+
+    # @model_validator(mode='after')
+    # def validate(self):
 
 
 def get_terminal_size(
@@ -88,6 +108,11 @@ def parse_config(filepath: str) -> dict:
     except ValueError as e:
         print(f"Parse error: {e}")
         raise
+    try:
+        config[St.ENTRY] = tuple(map(int, config[St.ENTRY].split(',')))
+        config[St.EXIT] = tuple(map(int, config[St.EXIT].split(',')))
+    except Exception as e:
+        print(f"Entry or Exit invalid\n:{e}")
     return config
 
 
@@ -211,7 +236,9 @@ def main() -> None:
         ta = TypeAdapter(Validation)
         res = ta.validate_python(config)
         print(res)
-        
+        config = res.model_dump()
+        print(config)
+
     except (FileNotFoundError, KeyError, ValueError) as e:
         print(f"Configuration error: {e}")
         print("Exiting.")
@@ -219,8 +246,8 @@ def main() -> None:
     except ValidationError as e:
         print(f"test {e}")
 
-    # maze = Maze(input)
-    # maze.run(input)
+    # maze = Maze(config)
+    # maze.run(config)
     # maze.interactive_menu()
 
 

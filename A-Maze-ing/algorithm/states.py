@@ -21,13 +21,13 @@ DIGIT_2 = [
     (4, 0), (4, 1), (4, 2)
 ]
 
-WIDTH = 'width'
-HEIGHT = 'height'
-WEIGHT = 'weight'
-SEED = 'seed'
-ANIMATE = 'animate'
-ENTRY = 'entry'
-EXIT = 'exit'
-OUTPUT_FILE = 'output_file'
-PERFECT = 'perfect'
-ALGORITHM = 'algorithm'
+WIDTH = 'WIDTH'
+HEIGHT = 'HEIGHT'
+WEIGHT = 'WEIGHT'
+SEED = 'SEED'
+ANIMATE = 'ANIMATE'
+ENTRY = 'ENTRY'
+EXIT = 'EXIT'
+OUTPUT_FILE = 'OUTPUT_FILE'
+PERFECT = 'PERFECT'
+ALGORITHM = 'ALGORITHM'
