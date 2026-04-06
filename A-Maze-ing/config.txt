@@ -6,6 +6,6 @@ SEED=420
 ANIMATE=true
 ENTRY=0,8
 EXIT=8,0
-OUTPUT_FILE=maze.txt
+OUTPUT_FILE=output_maze.txt
 PERFECT=False
 ALGORITHM=sidewinder

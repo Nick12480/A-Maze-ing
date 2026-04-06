@@ -29,7 +29,7 @@ from collections import deque
 from typing import Generator, Optional
 
 
-N, E, S, W = 1, 4, 2, 8
+W, S, E, N = 8, 4, 2, 1
 
 
 YELLOW = "\033[33m"
@@ -171,7 +171,7 @@ def convert_config(config: dict) -> tuple:
             if 'EXIT' in config
             else (width - 1, height - 1)
         )
-        output_file = config.get('OUTPUT_FILE', 'maze.txt')
+        output_file = config.get('OUTPUT_FILE', 'output_maze.txt')
         perfect = config.get('PERFECT', 'true').lower() == 'true'
         algorithm = config.get('ALGORITHM', 'sidewinder').lower()
     except ValueError as e:
