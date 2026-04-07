@@ -24,13 +24,11 @@ config.txt format (KEY=VALUE):
 import os
 import sys
 import random
-from typing_extensions import TypedDict
 from typing import Optional
 
-from pydantic import model_validator, ValidationError, Field, TypeAdapter, BaseModel, field_validator
+from pydantic import model_validator, Field, TypeAdapter, BaseModel
 
-from algorithm import Maze
-import algorithm as St
+from algorithm import Maze, ENTRY, EXIT
 
 
 class Validation(BaseModel):
@@ -56,11 +54,11 @@ class Validation(BaseModel):
             (self.WIDTH > max_width, f"WIDTH must be <= {max_width} (terminal\
             size)."),
             (self.HEIGHT > max_height,
-            f"HEIGHT must be <= {max_height} (terminal size)."),
+                f"HEIGHT must be <= {max_height} (terminal size)."),
             (self.ENTRY == self.EXIT, "ENTRY and EXIT must not be\
             identical."),
             (self.ALGORITHM not in valid_algorithms,
-            "ALGORITHM must be 'sidewinder' or 'placeholder'."),
+                "ALGORITHM must be 'sidewinder' or 'placeholder'."),
         ]
         for condition, msg in constraints:
             if condition:
@@ -76,7 +74,6 @@ class Validation(BaseModel):
                 )
         return self
 
-
     def __get_terminal_size(
         fallback_cols: int = 80, fallback_rows: int = 24
     ) -> tuple[int, int]:
@@ -91,14 +88,18 @@ class Validation(BaseModel):
 
 def parse_config(filepath: str) -> dict:
     """Read a plain-text configuration file into a dictionary.
-
     Each valid line follows the format ``KEY=VALUE``.
     Empty lines and comments (``#``) are skipped.
     """
     config: dict = {}
     try:
         with open(filepath, 'r') as f:
-            config = {key.strip(): value.strip() for key, value in (line.split("=", 1) for line in f if "=" in line) if not key.startswith("#")}
+            config = {
+                key.strip(): value.strip() for key, value in
+                (line.split("=", 1) for line in f
+                    if "=" in line)
+                if not key.startswith("#")
+                }
     except FileNotFoundError:
         print(f"Error: File '{filepath}' not found.")
         raise
@@ -106,8 +107,8 @@ def parse_config(filepath: str) -> dict:
         print(f"Parse error: {e}")
         raise
     try:
-        config[St.ENTRY] = tuple(map(int, config[St.ENTRY].split(',')))
-        config[St.EXIT] = tuple(map(int, config[St.EXIT].split(',')))
+        config[ENTRY] = tuple(map(int, config[ENTRY].split(',')))
+        config[EXIT] = tuple(map(int, config[EXIT].split(',')))
     except Exception as e:
         print(f"Entry or Exit not Tuple\n:{e}")
     return config
@@ -119,9 +120,7 @@ def main() -> None:
         print(f"Usage: python3 {sys.argv[0]} <config>")
         print("  Example: python3 a_maze_ing.py config.txt")
         sys.exit(1)
-
     config_path = sys.argv[1]
-
     try:
         config = parse_config(config_path)
         ta = TypeAdapter(Validation)
@@ -131,9 +130,9 @@ def main() -> None:
         print(f"Configuration error: {e}")
         print("Exiting.")
         sys.exit(1)
-        
+
     maze = Maze(config)
-    maze.run(config)
+    maze.run()
     maze.interactive_menu()
 
 

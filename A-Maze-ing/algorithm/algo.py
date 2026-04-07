@@ -7,11 +7,32 @@ from typing import Generator, Optional
 
 import functools
 
-import algorithm as St
+from .states import (
+    W,
+    S,
+    E,
+    N,
+    YELLOW,
+    PURPLE,
+    RESET,
+    UNDERLINE,
+    DIGIT_4,
+    DIGIT_2,
+    WIDTH,
+    HEIGHT,
+    WEIGHT,
+    SEED,
+    ANIMATE,
+    ENTRY,
+    EXIT,
+    OUTPUT_FILE,
+    PERFECT,
+    ALGORITHM
+)
 
 
 def timer(func):
-    
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -42,7 +63,7 @@ class Maze:
         pattern: Set of cells that form the '42' pattern.
     """
 
-    def __init__(self, input: dict) -> None:
+    def __init__(self, config: dict) -> None:
         """Initialise the maze and compute the '42' pattern.
 
         Args:
@@ -55,20 +76,20 @@ class Maze:
             algorithm: 'sidewinder' (default) or 'placeholder'.
             perfect: If ``False``, extra loops are added after generation.
         """
-        self.input = input
-        self.grid = [[0] * input[St.WIDTH] for _ in range(input[St.HEIGHT])]
+        self.config = config
+        self.grid = [[0] * config[WIDTH] for _ in range(config[HEIGHT])]
         self.path = []
 
-        ox = (input[St.WIDTH] - 7) // 2
-        oy = (input[St.HEIGHT] - 5) // 2
+        ox = (config[WIDTH] - 7) // 2
+        oy = (config[HEIGHT] - 5) // 2
         if ox >= 0 and oy >= 0:
             self.pattern: set = (
-                {(ox + x, oy + y) for y, x in St.DIGIT_4} |
-                {((ox + 4) + x, oy + y) for y, x in St.DIGIT_2}
+                {(ox + x, oy + y) for y, x in DIGIT_4} |
+                {((ox + 4) + x, oy + y) for y, x in DIGIT_2}
             )
             self.pattern = {
                 (x, y) for (x, y) in self.pattern
-                if 0 <= x < input[St.WIDTH] and 0 <= y < input[St.HEIGHT]
+                if 0 <= x < config[WIDTH] and 0 <= y < config[HEIGHT]
             }
         else:
             self.pattern = set()
@@ -83,21 +104,21 @@ class Maze:
         Yields:
             After each processed step for animation.
         """
-        random.seed(self.input[St.SEED])
-        for y in range(self.input[St.HEIGHT]):
+        random.seed(self.config[SEED])
+        for y in range(self.config[HEIGHT]):
             run_start = 0
-            for x in range(self.input[St.WIDTH]):
+            for x in range(self.config[WIDTH]):
                 yield
                 if (x, y) in self.pattern:
                     run_start = x + 1
                     continue
 
-                at_east_wall = (x + 1 == self.input[St.WIDTH])
+                at_east_wall = (x + 1 == self.config[WIDTH])
                 next_blocked = (x + 1, y) in self.pattern
                 carve_north = (
                     y > 0
                     and (at_east_wall or next_blocked
-                         or random.randint(0, self.input[St.WEIGHT] - 1) == 0)
+                         or random.randint(0, self.config[WEIGHT] - 1) == 0)
                 )
 
                 if carve_north:
@@ -108,15 +129,15 @@ class Maze:
                     ]
                     if valid:
                         cell = random.choice(valid)
-                        self.grid[y][cell] |= St.N
-                        self.grid[y - 1][cell] |= St.S
+                        self.grid[y][cell] |= N
+                        self.grid[y - 1][cell] |= S
                     elif not at_east_wall and not next_blocked:
-                        self.grid[y][x] |= St.E
-                        self.grid[y][x + 1] |= St.W
+                        self.grid[y][x] |= E
+                        self.grid[y][x + 1] |= W
                     run_start = x + 1
                 elif not at_east_wall and not next_blocked:
-                    self.grid[y][x] |= St.E
-                    self.grid[y][x + 1] |= St.W
+                    self.grid[y][x] |= E
+                    self.grid[y][x + 1] |= W
 
     # Algorithm 2: Placeholder
 
@@ -131,21 +152,21 @@ class Maze:
         paths exist between entry and exit.
         """
         random.seed(self.seed + 1)
-        extra = max(1, (self.input[St.WIDTH] * self.input[St.HEIGHT]) // 7)
+        extra = max(1, (self.config[WIDTH] * self.config[HEIGHT]) // 7)
         candidates = []
-        for y in range(self.input[St.HEIGHT]):
-            for x in range(self.input[St.WIDTH]):
+        for y in range(self.config[HEIGHT]):
+            for x in range(self.config[WIDTH]):
                 if (x, y) in self.pattern:
                     continue
                 if (
-                    not (self.grid[y][x] & St.E)
-                    and x + 1 < self.input[St.WIDTH]
+                    not (self.grid[y][x] & E)
+                    and x + 1 < self.config[WIDTH]
                     and (x + 1, y) not in self.pattern
                 ):
                     candidates.append(('E', x, y))
                 if (
-                    not (self.grid[y][x] & St.S)
-                    and y + 1 < self.input[St.HEIGHT]
+                    not (self.grid[y][x] & S)
+                    and y + 1 < self.config[HEIGHT]
                     and (x, y + 1) not in self.pattern
                 ):
                     candidates.append(('S', x, y))
@@ -153,11 +174,11 @@ class Maze:
         random.shuffle(candidates)
         for direction, x, y in candidates[:extra]:
             if direction == 'E':
-                self.grid[y][x] |= St.E
-                self.grid[y][x + 1] |= St.W
+                self.grid[y][x] |= E
+                self.grid[y][x + 1] |= W
             else:
-                self.grid[y][x] |= St.S
-                self.grid[y + 1][x] |= St.N
+                self.grid[y][x] |= S
+                self.grid[y + 1][x] |= N
 
     def generate(self) -> Generator[None, None, None]:
         """Generate the maze using the configured algorithm.
@@ -169,11 +190,11 @@ class Maze:
         Yields:
             After each processed step for animation.
         """
-        if self.input[St.ALGORITHM] == 'placeholder':
+        if self.config[ALGORITHM] == 'placeholder':
             yield from self._generate_placeholder()
         else:
             yield from self._generate_sidewinder()
-        if not self.input[St.PERFECT]:
+        if not self.config[PERFECT]:
             self._add_loops()
 
     def solve(self) -> None:
@@ -183,21 +204,21 @@ class Maze:
         If no path exists, ``path`` remains empty.
         """
         self.path = []
-        queue: deque = deque([(self.input[St.ENTRY], [self.input[St.ENTRY]])])
-        visited: set = {self.input[St.ENTRY]}
-        dirs = {St.N: (0, -1), St.S: (0, 1), St.E: (1, 0), St.W: (-1, 0)}
+        queue: deque = deque([(self.config[ENTRY], [self.config[ENTRY]])])
+        visited: set = {self.config[ENTRY]}
+        dirs = {N: (0, -1), S: (0, 1), E: (1, 0), W: (-1, 0)}
 
         while queue:
             (x, y), current_path = queue.popleft()
-            if (x, y) == self.input[St.EXIT]:
+            if (x, y) == self.config[EXIT]:
                 self.path = current_path
                 return
             for bit, (dx, dy) in dirs.items():
                 if self.grid[y][x] & bit:
                     nx, ny = x + dx, y + dy
                     if (
-                        0 <= nx < self.input[St.WIDTH]
-                        and 0 <= ny < self.input[St.HEIGHT]
+                        0 <= nx < self.config[WIDTH]
+                        and 0 <= ny < self.config[HEIGHT]
                         and (nx, ny) not in visited
                         and (nx, ny) not in self.pattern
                     ):
@@ -217,36 +238,36 @@ class Maze:
         """
         path_set = set(self.path)
         buf = ["\033[H"]
-        buf.append(" " + "_" * (self.input[St.WIDTH] * 2 - 1) + "\n")
+        buf.append(" " + "_" * (self.config[WIDTH] * 2 - 1) + "\n")
 
-        for y in range(self.input[St.HEIGHT]):
+        for y in range(self.config[HEIGHT]):
             buf.append("|")
-            for x in range(self.input[St.WIDTH]):
+            for x in range(self.config[WIDTH]):
                 cell = self.grid[y][x]
                 in_pattern = (x, y) in self.pattern
                 on_path = (x, y) in path_set
-                is_entry = (x, y) == self.input[St.ENTRY]
-                is_exit = (x, y) == self.input[St.EXIT]
+                is_entry = (x, y) == self.config[ENTRY]
+                is_exit = (x, y) == self.config[EXIT]
 
                 if in_pattern:
-                    buf.append(f"{St.PURPLE}_|{St.RESET}")
+                    buf.append(f"{PURPLE}_|{RESET}")
                     continue
 
                 if is_entry:
-                    buf.append(f"{St.YELLOW}E{St.RESET}")
+                    buf.append(f"{YELLOW}E{RESET}")
                 elif is_exit:
-                    buf.append(f"{St.YELLOW}X{St.RESET}")
+                    buf.append(f"{YELLOW}X{RESET}")
                 elif on_path:
-                    buf.append(f"{St.YELLOW}*{St.RESET}")
+                    buf.append(f"{YELLOW}*{RESET}")
                 else:
-                    buf.append(" " if (cell & St.S) else "_")
+                    buf.append(" " if (cell & S) else "_")
 
-                if not (cell & St.E):
+                if not (cell & E):
                     buf.append("|")
                 else:
                     if (
-                        not (cell & St.S) and x + 1 < self.input[St.WIDTH]
-                        and not (self.grid[y][x + 1] & St.S)
+                        not (cell & S) and x + 1 < self.config[WIDTH]
+                        and not (self.grid[y][x + 1] & S)
                     ):
                         buf.append("_")
                     else:
@@ -256,7 +277,7 @@ class Maze:
         print("".join(buf), end="", flush=True)
 
     def interactive_menu(self) -> None:
-        """Show the interactive terminal menu and handle user input.
+        """Show the interactive terminal menu and handle user config.
 
         Options: regenerate, toggle path, rotate colours, quit.
 
@@ -281,13 +302,13 @@ class Maze:
             choice = input("Choice (1-4): ").strip()
 
             if choice == '1':
-                self.input[St.SEED] += 1
-                self.grid = [[0] * self.input[St.WIDTH] for _ in range(self.input[St.HEIGHT])]
+                self.config[SEED] += 1
+                self.grid = [[0] * self.config[WIDTH] for _ in range(self.config[HEIGHT])]
                 self.path = []
-                if self.input[St.ANIMATE]:
+                if self.config[ANIMATE]:
                     print("\033[2J", end="", flush=True)
                 for _ in self.generate():
-                    if self.input[St.ANIMATE]:
+                    if self.config[ANIMATE]:
                         self.display()
                         time.sleep(0.02)
                 self.solve()
@@ -310,7 +331,7 @@ class Maze:
                 print("Goodbye!")
                 break
             else:
-                print("Invalid input.")
+                print("Invalid config.")
 
     def write_output(self, filepath: str) -> None:
         """Write the maze in hex format to a file.
@@ -336,8 +357,8 @@ class Maze:
                     line = "".join(format(cell, 'X') for cell in row)
                     f.write(line + "\n")
                 f.write("\n")
-                f.write(f"{self.input[St.ENTRY][0]},{self.input[St.ENTRY][1]}\n")
-                f.write(f"{self.input[St.EXIT][0]},{self.input[St.EXIT][1]}\n")
+                f.write(f"{self.config[ENTRY][0]},{self.config[ENTRY][1]}\n")
+                f.write(f"{self.config[EXIT][0]},{self.config[EXIT][1]}\n")
                 f.write(path_str + "\n")
             print(f"Output saved: {filepath}")
         except OSError as e:
@@ -367,7 +388,7 @@ class Maze:
         return "".join(result)
 
     @timer
-    def run(self, animate: bool, output_file: Optional[str] = None) -> None:
+    def run(self) -> None:
         """Generate, solve, display and write the output file.
 
         Args:
@@ -375,22 +396,22 @@ class Maze:
             output_file: Path to the output file. If ``None``, no file
                 is written.
         """
-        if animate:
+        if self.config[ANIMATE]:
             print("\033[2J", end="", flush=True)
 
         for _ in self.generate():
-            if animate:
+            if self.config[ANIMATE]:
                 self.display()
                 # time.sleep(0)
 
         self.solve()
         self.display()
 
-        if output_file:
-            self.write_output(output_file)
+        if self.config[OUTPUT_FILE]:
+            self.write_output(self.config[OUTPUT_FILE])
 
         print(
-            f"Algorithm: {self.input[St.ALGORITHM]}  "
-            f"{self.input[St.WIDTH]}x{self.input[St.HEIGHT]}  "
-            f"seed={self.input[St.SEED]}"
+            f"Algorithm: {self.config[ALGORITHM]}  "
+            f"{self.config[WIDTH]}x{self.config[HEIGHT]}  "
+            f"seed={self.config[SEED]}"
         )
