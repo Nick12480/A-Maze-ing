@@ -5,7 +5,7 @@ MYPY := uv run mypy
 MYPY_FLAGS := --warn-return-any \
 			  --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs \
 			  --check-untyped-defs
-UV_VENV := uv sync
+UV_VENV := python -m uv sync
 FILE := A-Maze-ing/config.txt
 OUT := output_maze.txt
 
@@ -14,12 +14,12 @@ install:
 	$(UV_VENV)
 
 run:
-	uv run $(NAME) $(FILE)
+	python -m uv run $(NAME) $(FILE)
 
 debug:
 	
 validate:
-	uv run output_validator.py $(OUT)
+	python -m uv run output_validator.py $(OUT)
 
 clean:
 	rm -rf __pycache__ .mypy_cache
