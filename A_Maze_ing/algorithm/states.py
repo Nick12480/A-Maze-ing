@@ -34,3 +34,4 @@ ALGORITHM = 'ALGORITHM'
 
 
 CHAR = '█'
+TIME = 0.01
