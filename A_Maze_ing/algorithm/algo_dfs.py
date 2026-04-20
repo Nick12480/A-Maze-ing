@@ -1,4 +1,5 @@
 import sys
+import os
 from typing import Generator, Optional, Any, Callable
 import random
 import time
@@ -23,7 +24,8 @@ from states import (
     EXIT,
     OUTPUT_FILE,
     PERFECT,
-    ALGORITHM
+    ALGORITHM,
+    TIME
 )
 
 
@@ -48,10 +50,12 @@ class Maze:
     def __init__(self, config: dict[str: Any]):
         self.config = config
 
-
     @timer
     def run(self):
         pass
+
+
+class Animate:
 
     @staticmethod
     def animate(output: str, char: str) -> None:
@@ -59,34 +63,59 @@ class Maze:
         receive standard output as str to generate maze fully
         based on given data, works independently
         """
+        entry = ""
+        exit = ""
+        path = ""
         height = 0
         out_list = [item for item in output.split('\n')]
         width = len(out_list[0])
-        for count, i in enumerate(out_list):
-            if i == '':
-                height = count
+        for i, item in enumerate(out_list):
+            if item == '':
+                height = i
+                entry = out_list[i + 1]
+                exit = out_list[i + 2]
+                path = out_list[i + 3]
                 break
 
+        entry = (int(item) for item in entry.split(','))
+        exit = (int(item) for item in exit.split(','))
+
+        buff = Animate.__animate_build_maze(out_list, height, width, char)
+
+    @staticmethod
+    def __animate_build_maze(out_list: list, height: int, width: int, char: str) -> list:
         buff = []
         top = ""
         curr = ""
-
         for y in range(height):
             for x in range(width):
-                if Maze.isbit(int(out_list[y][x], 16), N):
+                if Animate.isbit(int(out_list[y][x], 16), N):
                     top += char + char
+                    print(char + char, end='', file=sys.stdout, flush=True)
                 else:
                     top += char + " "
+                    print(char + " ", end='', file=sys.stdout, flush=True)
+                time.sleep(TIME)
 
-                if Maze.isbit(int(out_list[y][x], 16), W):
+            buff.append(top + char)
+            print(char)
+            top = ""
+
+            for x in range(width):
+                if Animate.isbit(int(out_list[y][x], 16), W):
                     curr += char + " "
+                    print(char + " ", end='', file=sys.stdout, flush=True)
                 else:
                     curr += "  "
-            buff.append(top + char)
+                    print("  ", end='', file=sys.stdout, flush=True)
+                time.sleep(TIME)
+
             buff.append(curr + char)
-            top = ""
+            print(char)
             curr = ""
+
         buff.append(char * (width * 2 + 1))
+        os.system('cls' if os.name == 'nt' else 'clear')
 
         for i in buff:
             print(i)
@@ -100,4 +129,4 @@ if __name__ == '__main__':
 
     with open('output.txt', 'r') as f:
         # print(f.read())
-        Maze.animate(f.read(), '█')
+        Animate.animate(f.read(), '█')
