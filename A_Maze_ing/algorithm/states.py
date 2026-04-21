@@ -1,9 +1,12 @@
 W, S, E, N = 8, 4, 2, 1
 
-YELLOW = "\033[33m"
-PURPLE = "\033[37;45m"
+YELLOW = "\033[38;5;94m"
+PURPLE = "\033[38;5;53m"
+RED = "\033[38;5;88m"
 RESET = "\033[0m"
 UNDERLINE = "\033[4m"
+
+COLOR = [YELLOW, PURPLE, RED, RESET]
 
 DIGIT_4 = [
     (0, 0),
