@@ -1,26 +1,3 @@
-"""A-Maze-ing: Maze Generator.
-
-Reads parameters from a config file, generates an animated ASCII maze
-(Sidewinder or Placeholder algorithm) and solves it via BFS.
-The '42' pattern is embedded as an impassable wall.
-The result is saved as a hex output file.
-
-Usage:
-    python3 a_maze_ing.py config.txt
-
-config.txt format (KEY=VALUE):
-    WIDTH       -- Maze width in cells (int, > 1, default: 20)
-    HEIGHT      -- Maze height in cells (int, > 1, default: WIDTH)
-    WEIGHT      -- North-carve bias for Sidewinder (int >= 1, default: 2)
-    SEED        -- Random seed (int, optional - random if omitted)
-    ANIMATE     -- Enable animation ('true'/'false', default: true)
-    ENTRY       -- Entry coordinates as 'col,row' (default: '0,0')
-    EXIT        -- Exit coordinates as 'col,row' (default: WIDTH-1,HEIGHT-1)
-    OUTPUT_FILE -- Output filename for hex representation (default: 'maze.txt')
-    PERFECT     -- Generate a perfect maze ('true'/'false', default: true)
-    ALGORITHM   -- 'sidewinder' or 'placeholder' (default: 'sidewinder')
-"""
-
 import os
 import sys
 import random
@@ -28,7 +5,9 @@ from typing import Optional
 
 from pydantic import model_validator, Field, TypeAdapter, BaseModel
 
-from .algorithm import Maze, ENTRY, EXIT
+from .maze import Maze
+from .algorithm import ENTRY, EXIT, ALGORITHM, OUTPUT_FILE, COLOR
+from .animate import Animate
 
 
 class Validation(BaseModel):
@@ -49,7 +28,7 @@ class Validation(BaseModel):
         max_width = (term_cols - 1) // 2
         max_height = term_rows - 2
 
-        valid_algorithms = ('sidewinder', 'placeholder')
+        valid_algorithms = ('sidewinder', 'dfs')
 
         if self.WIDTH > max_width:
             raise ValueError(f"WIDTH must be <= {max_width} (terminal size).")
@@ -132,8 +111,17 @@ def main() -> None:
         sys.exit(1)
 
     maze = Maze(config)
-    maze.run()
-    maze.interactive_menu()
+    obj = maze.run()
+    match config[ALGORITHM]:
+        case 'dfs':
+            with open(config[OUTPUT_FILE], 'r') as f:
+                buff = f.read()
+            data = Animate.animate(buff)
+            Animate.loop(data, config, COLOR)
+        case 'sidewinder':
+            if obj is None:
+                raise ValueError("returned object is none")
+            obj.interactive_menu()
 
 
 if __name__ == "__main__":
