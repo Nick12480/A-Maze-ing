@@ -7,6 +7,7 @@ from typing import Generator, Optional
 
 import functools
 
+from .base import Algorithm
 from .states import (
     W,
     S,
@@ -42,7 +43,7 @@ def timer(func):
     return wrapper
 
 
-class Maze:
+class Sidewinder(Algorithm):
     """Maze generator, solver and renderer.
 
     Supports two algorithms: Sidewinder and Placeholder.
