@@ -1,15 +1,17 @@
-from .algo_dfs import Maze
+from .algo_dfs import Dfs
+from .algo_nicki import Sidewinder
+from .base import Algorithm
 from .states import (
-    N,
+    W,
     S,
     E,
-    W,
-    DIGIT_2,
-    DIGIT_4,
+    N,
     YELLOW,
     PURPLE,
     RESET,
     UNDERLINE,
+    DIGIT_4,
+    DIGIT_2,
     WIDTH,
     HEIGHT,
     WEIGHT,
@@ -19,5 +21,8 @@ from .states import (
     EXIT,
     OUTPUT_FILE,
     PERFECT,
-    ALGORITHM
+    ALGORITHM,
+    TIME,
+    RED,
+    COLOR
     )
