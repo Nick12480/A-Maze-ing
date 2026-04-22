@@ -5,9 +5,9 @@ from typing import Optional
 
 from pydantic import model_validator, Field, TypeAdapter, BaseModel
 
-from .maze import Maze
-from .algorithm import ENTRY, EXIT, ALGORITHM, OUTPUT_FILE, COLOR
-from .animate import Animate
+from maze import Maze
+from algorithm import ENTRY, EXIT, ALGORITHM, OUTPUT_FILE, COLOR
+from animate import Animate
 
 
 class Validation(BaseModel):

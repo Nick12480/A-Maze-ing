@@ -6,8 +6,8 @@ import time
 
 import functools
 
-from .maze import Maze
-from .algorithm import (
+from maze import Maze
+from algorithm import (
     W,
     S,
     E,
@@ -30,8 +30,7 @@ from .algorithm import (
     ALGORITHM,
     TIME,
     RED,
-    COLOR,
-    Maze
+    COLOR
 )
 
 

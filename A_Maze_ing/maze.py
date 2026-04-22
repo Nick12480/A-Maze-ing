@@ -2,8 +2,7 @@ from typing import Any, Optional
 
 
 
-from .algorithm import Dfs, Sidewinder, Algorithm, ALGORITHM
-from .animate import Animate
+from algorithm import Dfs, Sidewinder, Algorithm, ALGORITHM
 
 
 class Maze:
