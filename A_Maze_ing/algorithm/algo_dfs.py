@@ -6,7 +6,7 @@ import time
 
 import functools
 
-from .base import Algorithm
+from .base import Algorithm as Alg
 from .states import (
     W,
     S,
@@ -43,7 +43,7 @@ def timer(func: Callable) -> Callable:
     return wrapper
 
 
-class Dfs(Algorithm):
+class Dfs(Alg):
     """
     look for random undiscovered area next to current
     explore, repeat
@@ -54,12 +54,15 @@ class Dfs(Algorithm):
 
     def __init__(self, config):
         self.config = config
-        self.walls = self.Init.__init_outer_walls(self.config)
+        self.walls = Alg.Init._init_outer_walls(self.config)
 
         self.field = [] # 0 undiscovered note; 1 discovered note
-        self.field.append([0 for _ in range(config[WIDTH] for _ in range(config[HEIGHT]))])
+        for y in range(config[HEIGHT]):
+                self.field.append([])
+                for x in range(config[WIDTH]):
+                    self.field[y].append(0)
 
-        self.walls, self.field = self.Init.__init_pattern(self.config, self.walls, self.field)
+        self.walls, self.field = Alg.Init._init_pattern(self.config, self.walls, self.field)
         self.route = ""
 
     @timer 
@@ -70,19 +73,30 @@ class Dfs(Algorithm):
         explore
         if stuck call backtrace
         """
-        position = list(self.config(ENTRY))
+        path = []
+        solution = []
+        position: tuple = self.config[ENTRY]
         while 0 in self.field:
-            x, y = tuple(position)
+            self.field = Alg.Logic._adjust_to_neighbour(position, self.field)
+
+            path.append(position)
+            if position == self.config[EXIT]:
+                solution = path
+
+            x, y = position
+
             self.field[y][x] = 1
-            direction = self.Logic.__get_new_neighbour(position, self.field)
-            if self.Logic.__get_new_neighbour(position):
+
+            direction: int = Alg.Logic._get_new_neighbour(position, self.field)
+            if direction:
                 """
                 Need to field as found and set walls according to nextdoor any neighbours walls
                 """
-                self.Logic.__adjust_to_neighbour
-                # position += next
+                self.walls = Alg.Logic._add_walls(self.walls, position, direction)
+                position = Alg.Logic._move_direction(direction, position)
+                
             else:
-                position = self.Logic.__backtrack()
+                position, path = Alg.Logic._backtrack(path)
 
         res = self.walls
         res.append([
@@ -91,8 +105,8 @@ class Dfs(Algorithm):
             f"{self.config[EXIT][0]}"
             f",{self.config[EXIT][0]}\n"
             ])
-        res.append([self.Output.__coords_to_dir()])
-        self.Output.__write_output()
+        res.append([Alg.Output._coords_to_dir(solution)])
+        Alg.Output._write_output(self.config[OUTPUT_FILE], res)
     
     
     
