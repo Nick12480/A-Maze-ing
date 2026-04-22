@@ -53,26 +53,37 @@ class Dfs(Algorithm):
     """
 
     def __init__(self, config):
-        super().__init__(config)
-        self.walls = []
-        self.route = ""
-        self.map = [] # 0 undiscovered note; 1 discovered note
-        self.map.append([0 for _ in range(config[WIDTH] for _ in range(config[HEIGHT]))])
+        self.config = config
+        self.walls = self.Init.__init_outer_walls(self.config)
 
-    @timer
+        self.field = [] # 0 undiscovered note; 1 discovered note
+        self.field.append([0 for _ in range(config[WIDTH] for _ in range(config[HEIGHT]))])
+
+        self.walls, self.field = self.Init.__init_pattern(self.config, self.walls, self.field)
+        self.route = ""
+
+    @timer 
     def run(self):
         """
         use starting node,
-        randomly choose next undiscovered neigbhour
+        randomly choose next undiscovered neighbour
         explore
         if stuck call backtrace
         """
-        position = []
-        while 0 in self.map:
-            if self.__has_new_neigbhour():
-                pass
+        position = list(self.config(ENTRY))
+        while 0 in self.field:
+            x, y = tuple(position)
+            self.field[y][x] = 1
+            direction = self.Logic.__get_new_neighbour(position, self.field)
+            if self.Logic.__get_new_neighbour(position):
+                """
+                Need to field as found and set walls according to nextdoor any neighbours walls
+                """
+                self.Logic.__adjust_to_neighbour
+                # position += next
             else:
-                position = self.__backtrace()
+                position = self.Logic.__backtrack()
+
         res = self.walls
         res.append([
             f"\n{self.config[ENTRY][0]},"
@@ -80,27 +91,8 @@ class Dfs(Algorithm):
             f"{self.config[EXIT][0]}"
             f",{self.config[EXIT][0]}\n"
             ])
-        res.append([self.__coords_to_dir()])
-        self.__write_output()
+        res.append([self.Output.__coords_to_dir()])
+        self.Output.__write_output()
     
-    @staticmethod
-    def __coords_to_dir(coords: list[list]) -> str:
-        pass
-
-    def __backtrace(self, path: list) -> list:
-        """
-        access previous node of path
-        if no new field -> go back further repeat
-        if new field found, return to explore further
-        """
-        pass
-
-    def __has_new_neigbhour(self) -> bool:
-        pass
-
-    def __write_output(self, result: str) -> None:
-        try:
-            with open(self.config[OUTPUT_FILE], 'w') as f:
-                f.write(result)
-        except Exception as e:
-            print(f"Couldn't write to file:\n{e}")
+    
+    
