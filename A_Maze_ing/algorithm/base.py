@@ -69,14 +69,22 @@ class Algorithm(ABC):
             """
             Return: (walls, field)
             """
+            x_mod = int((config[WIDTH] / 2) - 4)
+            y_mod = int((config[HEIGHT] / 2) - 3)
+
             #TODO right now it just sets top left corner to patterns
             total = N + E + S + W
-            for i in DIGIT_2:
-                x, y = i
-                field[y][x] = 1
-                walls[y][x] = total
             for i in DIGIT_4:
                 x, y = i
+                x += x_mod
+                y += y_mod
+                field[y][x] = 1
+                walls[y][x] = total
+            for i in DIGIT_2:
+                x, y = i
+                x += 4
+                x += x_mod
+                y += y_mod
                 field[y][x] = 1
                 walls[y][x] = total
             return(walls, field)
@@ -93,7 +101,11 @@ class Algorithm(ABC):
             """
 
             path.pop(-1)
-            return (path[-1], path)
+            try:
+                return (path[-1], path)
+            except IndexError:
+                print("Maze start inside of enclosed block\nTERMINATING")
+                sys.exit(1)
 
         @staticmethod
         def _add_walls(walls: list[list], position: tuple, exception: int) -> list[list]:
@@ -108,6 +120,7 @@ class Algorithm(ABC):
             total = N + E + S + W #     1111
             total -= exception #        1110
             walls[y][x] |= total #      1110 + walls[y][x](before)
+            return walls
 
         @staticmethod
         def _move_direction(direction: int, position: list) -> list:
@@ -129,41 +142,43 @@ class Algorithm(ABC):
             return position
 
         @staticmethod
-        def _get_new_neighbour(position: tuple, field: list) -> int:
+        def _get_new_neighbour(config: dict, position: tuple, field: list) -> int:
             """
             check if current cell has undiscoverd neighbours
 
             returns: one random direction bitwise int
             """
             x, y = position
-            poss = [None]
+            poss = []
             neighbour = None
 
-            if field[y + 1][x]:
+            if config[HEIGHT] > y and field[y + 1][x] == 0:
                 poss.append(S)
-            if field[y - 1][x]:
+            if y > 0 and field[y - 1][x] == 0:
                 poss.append(N)
-            if field[y][x + 1]:
+            if config[WIDTH] > x and field[y][x + 1] == 0:
                 poss.append(E)
-            if field[y][x - 1]:
+            if x > 0 and field[y][x - 1] == 0:
                 poss.append(W)
 
-            if poss[0] is not None:
-                neighbour = poss[int(random.random) % len(poss)]
+            poss.append(0)
+            if poss[0] != 0:
+                poss.pop(-1)
+                neighbour = poss[int(random.randint(1, 1000) % len(poss))]
             return neighbour
 
         @staticmethod
-        def _adjust_to_neighbour(position: tuple, field: list) -> list:
+        def _adjust_to_neighbour(config: dict, position: tuple, walls: list) -> list:
             x, y = position
-            if field[y][x + 1] & W:
-                field[x][y] |= E
-            if field[y][x - 1] & E:
-                field[x][y] |= W
-            if field[y + 1][x] & N:
-                field[x][y] |= S
-            if field[y - 1][x] & S:
-                field[x][y] |= N
-            return field
+            if config[WIDTH] > x and walls[y][x + 1] & W:
+                walls[x][y] |= E
+            if x > 0 and walls[y][x - 1] & E:
+                walls[x][y] |= W
+            if config[HEIGHT] > y and walls[y + 1][x] & N:
+                walls[x][y] |= S
+            if y > 0 and walls[y - 1][x] & S:
+                walls[x][y] |= N
+            return walls
             
 
     class Output:

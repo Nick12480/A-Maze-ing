@@ -76,10 +76,9 @@ class Dfs(Alg):
         path = []
         solution = []
         position: tuple = self.config[ENTRY]
-        while 0 in self.field:
-            self.field = Alg.Logic._adjust_to_neighbour(position, self.field)
+        while any(0 in row for row in self.field):
+            self.walls = Alg.Logic._adjust_to_neighbour(self.config, position, self.walls)
 
-            path.append(position)
             if position == self.config[EXIT]:
                 solution = path
 
@@ -87,11 +86,12 @@ class Dfs(Alg):
 
             self.field[y][x] = 1
 
-            direction: int = Alg.Logic._get_new_neighbour(position, self.field)
+            direction: int = Alg.Logic._get_new_neighbour(self.config, position, self.field)
             if direction:
                 """
                 Need to field as found and set walls according to nextdoor any neighbours walls
                 """
+                path.append(position)
                 self.walls = Alg.Logic._add_walls(self.walls, position, direction)
                 position = Alg.Logic._move_direction(direction, position)
                 
