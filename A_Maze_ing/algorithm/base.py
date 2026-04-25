@@ -60,10 +60,14 @@ class LogicError(Exception):
         return f"{self.message} | {details}"
 
 class Algorithm(ABC):
+    """
+    Modules for different Algorithms of Maze generation, following the 42 A_Maze_ing requirements and needs
 
+    It is to be used as Parent class to each algorithm and used as building blocks to create an algorithm
+    """
     @abstractmethod
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        pass
 
     @abstractmethod
     def run(self):
@@ -315,7 +319,7 @@ class Algorithm(ABC):
             """
             change walls[int] matrix to walls[hex]
             """
-            hex_walls = []
+            hex_walls: list[list] = []
             for y, i in enumerate(walls):
                 hex_walls.append([])
                 for num in i:
