@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import model_validator, Field, TypeAdapter, BaseModel
 
 from maze import Maze
-from algorithm import ENTRY, EXIT, ALGORITHM, OUTPUT_FILE, COLOR
+from algorithm import ENTRY, EXIT, ALGORITHM, OUTPUT_FILE, COLOR, SEED
 from animate import Animate
 
 
@@ -109,6 +109,8 @@ def main() -> None:
         print(f"Configuration error: {e}")
         print("Exiting.")
         sys.exit(1)
+    random.seed(config[SEED])
+    print(f"Seed: {config[SEED]}\n")
 
     maze = Maze(config)
     obj = maze.run()
@@ -122,6 +124,8 @@ def main() -> None:
             if obj is None:
                 raise ValueError("returned object is none")
             obj.interactive_menu()
+
+# 4103455908
 
 
 if __name__ == "__main__":
