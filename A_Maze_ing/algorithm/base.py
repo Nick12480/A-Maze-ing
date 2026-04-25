@@ -84,7 +84,7 @@ class Algorithm(ABC):
             -------
                 walls matrix
             """
-            if width == 0 or height == 0:
+            if width <= 0 or height <= 0:
                 raise LogicError("impossible size of maze")
             walls: list[list] = []
             for y in range(height):
@@ -113,6 +113,8 @@ class Algorithm(ABC):
             -------
                 field matrix
             """
+            if width <= 0 or height <= 0:
+                raise LogicError("impossible size of maze")
             field: list[list] = [] # 0 undiscovered note; 1 discovered note
             for y in range(height):
                 field.append([])
@@ -204,9 +206,19 @@ class Algorithm(ABC):
             exception : sum of bitwise exceptions
             """
             x, y = tuple(position)
+            if x < 0 or y < 0:
+                raise LogicError(
+                    f"Position contains negative: {position}",
+                    position=position
+                )
             #exception                  0001
             total = N + E + S + W #     1111
             total -= exception #        1110
+            if total < 0 or exception < 0 or total > (N + E + S + W):
+                raise LogicError(
+                    f"Exception param doesnt fit specifications: {exception}",
+                    exception=exception
+                )
             try:
                 walls[y][x] |= total #      1110 + walls[y][x](before)
             except IndexError:
@@ -232,15 +244,26 @@ class Algorithm(ABC):
                 raise LogicError("Direction is 0 or None")
             if position == None:
                 raise LogicError("Postition is None")
+            if position[0] < 0 or position[1] < 0:
+                raise LogicError(
+                    f"Position contains negative: {position}",
+                    position=position
+                )
             position = list(position)
-            if direction == N:
+            if direction == N and position[1] > 0:
                 position[1] -= 1
-            if direction == E:
+            elif direction == E:
                 position[0] += 1
-            if direction == S:
+            elif direction == S:
                 position[1] += 1
-            if direction == W:
+            elif direction == W and position[0] > 0:
                 position[0] -= 1
+            else:
+                raise LogicError(
+                    "bad position or direction",
+                    direction=direction,
+                    position=position
+                )
             return tuple(position)
 
         @staticmethod
@@ -258,6 +281,12 @@ class Algorithm(ABC):
             x, y = position
             poss = []
             neighbour = None
+
+            if x < 0 or y < 0:
+                raise LogicError(
+                    f"Position contains negative: {position}",
+                    position=position
+                )
 
             try:
                 if (height - 1) > y and field[y + 1][x] == 0:
@@ -294,6 +323,8 @@ class Algorithm(ABC):
             returns walls
             """
             x, y = position
+            if width <= 0 or height <= 0:
+                raise LogicError("impossible size of maze")
             try:
                 if (width - 1) > x and walls[y][x + 1] & W:
                     walls[y][x] |= E
@@ -323,6 +354,11 @@ class Algorithm(ABC):
             for y, i in enumerate(walls):
                 hex_walls.append([])
                 for num in i:
+                    if num > 0:
+                        raise LogicError(
+                            "negative value in walls",
+                            walls=walls
+                        )
                     hex_walls[y].append(HEX[num % 16])
             return hex_walls
 
@@ -401,8 +437,15 @@ if __name__ == "__main__":
         #     for thing in i:
         #         print(thing)
 
-        #TODO test from here on
-        # Algorithm.Logic._add_walls()
+        # x = 10
+        # y = 10
+        # res = Algorithm.Logic._add_walls(
+        #     Algorithm.Init._outer_walls(x, y),
+        #     (5, 5),
+        #     N+E+S+W
+        # )
+        # for i in res:
+        #     print(i)
 
         # Algorithm.Logic._adjust_to_neighbour()
         # Algorithm.Logic._backtrack()
