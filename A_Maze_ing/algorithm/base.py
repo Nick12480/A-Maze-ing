@@ -63,7 +63,7 @@ class Algorithm(ABC):
 
     @abstractmethod
     def __init__(self, config):
-        config = config
+        self.config = config
 
     @abstractmethod
     def run(self):
@@ -72,7 +72,7 @@ class Algorithm(ABC):
     class Init:
 
         @staticmethod
-        def _init_outer_walls(width: int, height: int) -> list[list]:
+        def _outer_walls(width: int, height: int) -> list[list]:
             """
             Create matrix of given size where edges are respective walls in bitwise
 
@@ -82,7 +82,7 @@ class Algorithm(ABC):
             """
             if width == 0 or height == 0:
                 raise LogicError("impossible size of maze")
-            walls = []
+            walls: list[list] = []
             for y in range(height):
                 walls.append([])
                 for x in range(width):
@@ -101,7 +101,24 @@ class Algorithm(ABC):
             return walls
 
         @staticmethod
-        def _init_pattern(width: int, height: int, walls: list[list], field: list[list]) -> tuple[list, list]:
+        def _field(width: int, height: int) -> list[list]:
+            """
+            Create matrix of given size where 0 is undiscovered, 1 is discovered
+
+            Returns
+            -------
+                field matrix
+            """
+            field: list[list] = [] # 0 undiscovered note; 1 discovered note
+            for y in range(height):
+                field.append([])
+                for _ in range(width):
+                    field[y].append(0)
+            return field
+
+
+        @staticmethod
+        def _pattern(width: int, height: int, walls: list[list], field: list[list]) -> tuple[list, list]:
             """
             Init 42 pattern in walls matrix
 
@@ -112,10 +129,10 @@ class Algorithm(ABC):
             walls : matrix with bitwise walls
             field : matrix of 0/1 for discovered cells
             """
-            if width < 7 and height < 9:
+            if width < 9 or height < 7:
                 raise LogicError("Size too small for 42-pattern")
-            x_mod = int((width / 2) - 4)
-            y_mod = int((height / 2) - 3)
+            x_mod = int((width // 2) - 3)
+            y_mod = int((height // 2) - 2)
 
             try:
                 total = N + E + S + W
@@ -159,11 +176,15 @@ class Algorithm(ABC):
             path : updated path
             """
             try:
+                _temp = path[0]
                 path.pop(-1)
                 return (tuple(path[-1]), path)
             except IndexError:
-                print("Maze start inside of enclosed block\nTERMINATING")
-                sys.exit(1)
+                raise LogicError(
+                    "Path is empty\nLikely you start in an enclosed cell",
+                    path=path,
+                    popped=_temp
+                )
 
         @staticmethod
         def _add_walls(walls: list[list], position: tuple, exception: int) -> list[list]:
@@ -182,7 +203,13 @@ class Algorithm(ABC):
             #exception                  0001
             total = N + E + S + W #     1111
             total -= exception #        1110
-            walls[y][x] |= total #      1110 + walls[y][x](before)
+            try:
+                walls[y][x] |= total #      1110 + walls[y][x](before)
+            except IndexError:
+                raise LogicError(
+                    "Position doesn't exist",
+                    position=position
+                )
             return walls
 
         @staticmethod
@@ -197,6 +224,10 @@ class Algorithm(ABC):
 
             Return updated position
             """
+            if direction == 0 or direction is None:
+                raise LogicError("Direction is 0 or None")
+            if position == None:
+                raise LogicError("Postition is None")
             position = list(position)
             if direction == N:
                 position[1] -= 1
@@ -224,14 +255,21 @@ class Algorithm(ABC):
             poss = []
             neighbour = None
 
-            if (height - 1) > y and field[y + 1][x] == 0:
-                poss.append(S)
-            if y > 0 and field[y - 1][x] == 0:
-                poss.append(N)
-            if (width - 1) > x and field[y][x + 1] == 0:
-                poss.append(E)
-            if x > 0 and field[y][x - 1] == 0:
-                poss.append(W)
+            try:
+                if (height - 1) > y and field[y + 1][x] == 0:
+                    poss.append(S)
+                if y > 0 and field[y - 1][x] == 0:
+                    poss.append(N)
+                if (width - 1) > x and field[y][x + 1] == 0:
+                    poss.append(E)
+                if x > 0 and field[y][x - 1] == 0:
+                    poss.append(W)
+            except IndexError:
+                raise LogicError(
+                    "Field or Position is badly formated",
+                    field=field,
+                    position=position
+                    )
 
             poss.append(0)
             if poss[0] != 0:
@@ -252,14 +290,21 @@ class Algorithm(ABC):
             returns walls
             """
             x, y = position
-            if (width - 1) > x and walls[y][x + 1] & W:
-                walls[y][x] |= E
-            if x > 0 and walls[y][x - 1] & E:
-                walls[y][x] |= W
-            if (height - 1) > y and walls[y + 1][x] & N:
-                walls[y][x] |= S
-            if y > 0 and walls[y - 1][x] & S:
-                walls[y][x] |= N
+            try:
+                if (width - 1) > x and walls[y][x + 1] & W:
+                    walls[y][x] |= E
+                if x > 0 and walls[y][x - 1] & E:
+                    walls[y][x] |= W
+                if (height - 1) > y and walls[y + 1][x] & N:
+                    walls[y][x] |= S
+                if y > 0 and walls[y - 1][x] & S:
+                    walls[y][x] |= N
+            except IndexError:
+                raise LogicError(
+                    "Walls or Position is badly formated",
+                    walls=walls,
+                    position=position
+                    )
             return walls
             
 
@@ -330,19 +375,39 @@ class Algorithm(ABC):
 
 
 if __name__ == "__main__":
-    res = Algorithm.Init._init_outer_walls(1, 0)
-    for i in res:
-        print(i)
-    # Algorithm.Init._init_pattern()
+    try:
+        # res = Algorithm.Init._outer_walls(10,10)
+        # for i in res:
+        #     print(i)
 
-    # Algorithm.Logic._add_walls()
-    # Algorithm.Logic._adjust_to_neighbour()
-    # Algorithm.Logic._backtrack()
-    # Algorithm.Logic._get_new_neighbour()
-    # Algorithm.Logic._move_direction()
+        # res = Algorithm.Init._field(10,10)
+        # for i in res:
+        #     print(i)
 
-    # Algorithm.Output._coords_to_dir()
-    # Algorithm.Output._walls_to_hex()
-    # Algorithm.Output._walls_to_str()
-    # Algorithm.Output._write_output()
-    
+        # x = 11
+        # y = 11
+        # res = Algorithm.Init._pattern(
+        #     x,
+        #     y,
+        #     Algorithm.Init._outer_walls(x, y),
+        #     Algorithm.Init._field(x, y)
+        #     )
+        # for i in res:
+        #     print(i.__class__)
+        #     for thing in i:
+        #         print(thing)
+
+        #TODO test from here on
+        # Algorithm.Logic._add_walls()
+
+        # Algorithm.Logic._adjust_to_neighbour()
+        # Algorithm.Logic._backtrack()
+        # Algorithm.Logic._get_new_neighbour()
+        # Algorithm.Logic._move_direction()
+
+        # Algorithm.Output._coords_to_dir()
+        # Algorithm.Output._walls_to_hex()
+        # Algorithm.Output._walls_to_str()
+        # Algorithm.Output._write_output()
+    except Exception as e:
+        print(e)
