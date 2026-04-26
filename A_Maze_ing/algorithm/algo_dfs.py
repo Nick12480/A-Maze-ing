@@ -55,15 +55,11 @@ class Dfs(Alg):
 
     def __init__(self, config):
         self.config = config
-        self.walls = Alg.Init._init_outer_walls(self.config[WIDTH], self.config[HEIGHT])
+        self.walls = Alg.Init._outer_walls(self.config[WIDTH], self.config[HEIGHT])
 
-        self.field = [] # 0 undiscovered note; 1 discovered note
-        for y in range(config[HEIGHT]):
-                self.field.append([])
-                for x in range(config[WIDTH]):
-                    self.field[y].append(0)
+        self.field = Alg.Init._field(self.config[WIDTH], self.config[HEIGHT])
 
-        self.walls, self.field = Alg.Init._init_pattern(self.config[WIDTH], self.config[HEIGHT], self.walls, self.field)
+        self.walls, self.field = Alg.Init._pattern(self.config[WIDTH], self.config[HEIGHT], self.walls, self.field)
         self.route = ""
 
     @timer 
@@ -79,10 +75,7 @@ class Dfs(Alg):
         position: tuple = self.config[ENTRY]
         prev_direction = 0
         while any(0 in row for row in self.field):
-            self.walls = Alg.Logic._adjust_to_neighbour(self.config, position, self.walls)
-
-            if position == self.config[EXIT]:
-                solution = path
+            self.walls = Alg.Logic._adjust_to_neighbour(self.config[WIDTH], self.config[HEIGHT], position, self.walls)
 
             x, y = position
 
@@ -94,9 +87,11 @@ class Dfs(Alg):
                 Need to field as found and set walls according to nextdoor any neighbours walls
                 """
                 path.append(position)
-                self.walls = Alg.Logic._add_walls(self.walls, position, direction + prev_direction)
+                if position == self.config[EXIT]:
+                    solution = path.copy()
+                self.walls = Alg.Logic._add_walls(self.walls, position, (direction | prev_direction))
                 position = Alg.Logic._move_direction(direction, position)
-                prev_direction = int(direction)
+                prev_direction = Alg.Logic._get_rev_direction(direction)
             else:
                 position, path = Alg.Logic._backtrack(path)
             
@@ -107,6 +102,3 @@ class Dfs(Alg):
         res += ','.join(exit) + '\n'
         res += Alg.Output._coords_to_dir(solution) + '\n'
         Alg.Output._write_output(self.config[OUTPUT_FILE], res)
-    
-    
-    

@@ -8,30 +8,13 @@ from typing import Any
 from reprlib import repr as short_repr
 
 
-from states import (
+from .states import (
     W,
     S,
     E,
     N,
-    YELLOW,
-    PURPLE,
-    RESET,
-    UNDERLINE,
     DIGIT_4,
     DIGIT_2,
-    WIDTH,
-    HEIGHT,
-    WEIGHT,
-    SEED,
-    ANIMATE,
-    ENTRY,
-    EXIT,
-    OUTPUT_FILE,
-    PERFECT,
-    ALGORITHM,
-    TIME,
-    RED,
-    COLOR,
     HEX
 )
 
@@ -311,7 +294,20 @@ class Algorithm(ABC):
             return neighbour
 
         @staticmethod
-        def _adjust_to_neighbour(width: int, height: int, walls: list[list], position: tuple) -> list[list]:
+        def _get_rev_direction(direction: int) -> int:
+            if direction == N:
+                return S
+            elif direction == S:
+                return N
+            elif direction == E:
+                return W
+            elif direction == W:
+                return E
+            else:
+                raise LogicError(f"direction is bad: {direction}")
+
+        @staticmethod
+        def _adjust_to_neighbour(width: int, height: int, position: tuple, walls: list[list]) -> list[list]:
             """
             Add walls depending on neighbours walls
 
@@ -354,7 +350,7 @@ class Algorithm(ABC):
             for y, i in enumerate(walls):
                 hex_walls.append([])
                 for num in i:
-                    if num > 0:
+                    if num < 0:
                         raise LogicError(
                             "negative value in walls",
                             walls=walls
@@ -414,47 +410,65 @@ class Algorithm(ABC):
                 raise
 
 
-if __name__ == "__main__":
-    try:
-        # res = Algorithm.Init._outer_walls(10,10)
-        # for i in res:
-        #     print(i)
+# if __name__ == "__main__":
+#     try:
+#         res = Algorithm.Init._outer_walls(10,10)
+#         for i in res:
+#             print(i)
 
-        # res = Algorithm.Init._field(10,10)
-        # for i in res:
-        #     print(i)
+#         res = Algorithm.Init._field(10,10)
+#         for i in res:
+#             print(i)
 
-        # x = 11
-        # y = 11
-        # res = Algorithm.Init._pattern(
-        #     x,
-        #     y,
-        #     Algorithm.Init._outer_walls(x, y),
-        #     Algorithm.Init._field(x, y)
-        #     )
-        # for i in res:
-        #     print(i.__class__)
-        #     for thing in i:
-        #         print(thing)
+#         x = 11
+#         y = 11
+#         res = Algorithm.Init._pattern(
+#             x,
+#             y,
+#             Algorithm.Init._outer_walls(x, y),
+#             Algorithm.Init._field(x, y)
+#             )
+#         for i in res:
+#             print(i.__class__)
+#             for thing in i:
+#                 print(thing)
 
-        # x = 10
-        # y = 10
-        # res = Algorithm.Logic._add_walls(
-        #     Algorithm.Init._outer_walls(x, y),
-        #     (5, 5),
-        #     N+E+S+W
-        # )
-        # for i in res:
-        #     print(i)
+#         x = 10
+#         y = 10
+#         res = Algorithm.Logic._add_walls(
+#             Algorithm.Init._outer_walls(x, y),
+#             (5, 5),
+#             N+E+S+W
+#         )
+#         for i in res:
+#             print(i)
 
-        # Algorithm.Logic._adjust_to_neighbour()
-        # Algorithm.Logic._backtrack()
-        # Algorithm.Logic._get_new_neighbour()
-        # Algorithm.Logic._move_direction()
+#         x = 10
+#         y = 10
+#         walls, field = Algorithm.Init._pattern(x, y, Algorithm.Init._outer_walls(x, y), Algorithm.Init._field(x, y))
+#         res = Algorithm.Logic._adjust_to_neighbour(
+#             x,
+#             y,
+#             walls,
+#             (9,5)
+#         )
+#         for i in res:
+#             print(i)
 
-        # Algorithm.Output._coords_to_dir()
-        # Algorithm.Output._walls_to_hex()
-        # Algorithm.Output._walls_to_str()
-        # Algorithm.Output._write_output()
-    except Exception as e:
-        print(e)
+#         res = Algorithm.Logic._backtrack(
+#             [
+#                 [0,0]
+#             ]
+#         )
+#         print(res)
+
+#         Algorithm.Logic._get_new_neighbour()
+
+#         Algorithm.Logic._move_direction()
+
+#         Algorithm.Output._coords_to_dir()
+#         Algorithm.Output._walls_to_hex()
+#         Algorithm.Output._walls_to_str()
+#         Algorithm.Output._write_output()
+#     except Exception as e:
+#         print(e)
