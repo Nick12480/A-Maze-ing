@@ -18,9 +18,6 @@ install:
 run:
 	$(PYTHON) -m uv run $(NAME) $(CONFIG) --interactive
 
-# test:
-# 	$(PYTHON) -m unittest discover -s tests -v
-
 validate:
 	$(PYTHON) output_validator.py $(OUTPUT)
 

@@ -26,12 +26,7 @@ ERASE_LINE_END = "\033[K"
 SYNC_BEGIN = "\033[?2026h"
 SYNC_END = "\033[?2026l"
 
-# ---------------------------------------------------------------------------
-# Colour palettes – each dict must contain all seven canvas-cell keys.
-# The first entry is the default; interactive_menu cycles through all of them.
-# ---------------------------------------------------------------------------
 _PALETTES: List[Dict[str, str]] = [
-    # 0 – original dark theme
     {
         "wall":    BG_WALL,
         "empty":   BG_EMPTY,
@@ -41,7 +36,6 @@ _PALETTES: List[Dict[str, str]] = [
         "exit":    BG_EXIT,
         "current": BG_CURRENT,
     },
-    # 1 – blue-green theme
     {
         "wall":    "\033[48;5;24m",
         "empty":   "\033[48;5;17m",
@@ -51,7 +45,6 @@ _PALETTES: List[Dict[str, str]] = [
         "exit":    "\033[48;5;196m",
         "current": "\033[48;5;226m",
     },
-    # 2 – warm red-gold theme
     {
         "wall":    "\033[48;5;130m",
         "empty":   "\033[48;5;52m",
@@ -61,19 +54,17 @@ _PALETTES: List[Dict[str, str]] = [
         "exit":    "\033[48;5;201m",
         "current": "\033[48;5;255m",
     },
-    # 3 – greyscale theme
     {
-        "wall":    "\033[48;5;250m",
-        "empty":   "\033[48;5;235m",
+        "wall":    "\033[48;5;69m",
+        "empty":   "\033[48;5;9m",
         "pattern": "\033[48;5;244m",
         "path":    "\033[48;5;255m",
         "entry":   "\033[48;5;240m",
-        "exit":    "\033[48;5;232m",
+        "exit":    "\033[48;5;666m",
         "current": "\033[48;5;15m",
     },
 ]
 
-# Active palette used by _render_row; replaced at runtime by interactive_menu.
 _palette_idx = 0
 
 

@@ -173,7 +173,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
     # ── state ──────────────────────────────────────────────────────────────
     show_path: bool = True
     palette_idx: int = 0
-    pattern_error: str = ""  # Speichert die Fehlermeldung für das UI
+    pattern_error: str = ""
 
     animator = AnsiAnimator(delay=0.02 if sys.stdout.isatty() else 0.0)
 
@@ -215,7 +215,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
             sys.stdout.write(
                 "\n\033[1m==== A-Maze-ing ====\033[0m\n"
                 "Seed: {seed}  |  Palette: {pal}/{total}\n"
-                "{err}"  # Platzhalter für die Fehlermeldung
+                "{err}"
                 "\n"
                 "1. Regenerate (same seed)\n"
                 "2. Regenerate (new seed)\n"
@@ -246,7 +246,6 @@ def interactive_menu(config: Dict[str, object]) -> None:
                 show_path = not show_path
 
             elif choice == "4":
-                # Unser sauberer Index-Fix bleibt erhalten!
                 palette_idx = (palette_idx + 1) % len(_PALETTES)
                 _animate_module._palette_idx = palette_idx
 
@@ -254,7 +253,6 @@ def interactive_menu(config: Dict[str, object]) -> None:
                 running = False
 
     finally:
-        # Always restore the normal screen and cursor on exit
         sys.stdout.write("\033[?1049l\033[?25h" + RESET + "\n")
         sys.stdout.flush()
         print("Goodbye!")
