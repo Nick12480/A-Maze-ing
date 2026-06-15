@@ -1,28 +1,49 @@
+"""Public maze algorithm API."""
+
 from .algo_dfs import Dfs
+from .algo_kruskal import Kruskal
 from .algo_nicki import Sidewinder
-from .base import Algorithm
+from .base import Algorithm, GenerationStep, LogicError
 from .states import (
-    W,
-    S,
-    E,
-    N,
-    YELLOW,
-    PURPLE,
-    RESET,
-    UNDERLINE,
-    DIGIT_4,
-    DIGIT_2,
-    WIDTH,
-    HEIGHT,
-    WEIGHT,
-    SEED,
+    ALGORITHM,
     ANIMATE,
+    COLOR,
+    E,
     ENTRY,
     EXIT,
+    HEIGHT,
+    N,
     OUTPUT_FILE,
     PERFECT,
-    ALGORITHM,
+    S,
+    SEED,
     TIME,
-    RED,
-    COLOR
-    )
+    W,
+    WEIGHT,
+    WIDTH,
+)
+
+__all__ = [
+    "Algorithm",
+    "Dfs",
+    "GenerationStep",
+    "Kruskal",
+    "LogicError",
+    "Sidewinder",
+    "ALGORITHM",
+    "ANIMATE",
+    "COLOR",
+    "E",
+    "ENTRY",
+    "EXIT",
+    "HEIGHT",
+    "N",
+    "OUTPUT_FILE",
+    "PERFECT",
+    "S",
+    "SEED",
+    "TIME",
+    "W",
+    "WEIGHT",
+    "WIDTH",
+]

@@ -1,4 +1,7 @@
-NAME := A-Maze-ing/a_maze_ing.py
+NAME := A_Maze_ing/a_maze_ing.py
+PYTHON ?= python3
+CONFIG ?= config.txt
+OUTPUT ?= output_maze.txt
 FLAKE8 := uv run -m flake8
 FLAKE8_FLAGS := --count --show-source --filename [./*.py]
 MYPY := uv run mypy
@@ -6,23 +9,17 @@ MYPY_FLAGS := --warn-return-any \
 			  --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs \
 			  --check-untyped-defs
 UV_VENV := python -m uv sync
-FILE := A-Maze-ing/config.txt
-OUT := output_maze.txt
 
+all: install run
 
 install:
 	$(UV_VENV)
 
 run:
-	python -m uv run $(NAME) $(FILE)
+	$(PYTHON) -m uv run $(NAME) $(CONFIG) --interactive
 
-debug:
-	
 validate:
-	python -m uv run output_validator.py $(OUT)
-
-clean:
-	rm -rf __pycache__ .mypy_cache
+	$(PYTHON) output_validator.py $(OUTPUT)
 
 lint:
 	$(FLAKE8) $(FLAKE8_FLAGS) .
@@ -31,3 +28,9 @@ lint:
 lint-strict:
 	$(FLAKE8) $(FLAKE8_FLAGS) .
 	$(MYPY) . --strict
+
+clean:
+	rm -rf .mypy_cache .pytest_cache
+	find . -type d -name __pycache__ -prune -exec rm -rf {} +
+
+.PHONY: all install run test lint validate clean

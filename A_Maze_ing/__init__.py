@@ -1,1 +1,5 @@
-from .a_maze_ing import Maze
+"""A-Maze-ing package."""
+
+from .maze import Maze
+
+__all__ = ["Maze"]

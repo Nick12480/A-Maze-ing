@@ -1,211 +1,210 @@
+"""Buffered ANSI terminal animation driven by yielded algorithm events."""
+
 import sys
-import os
-from typing import Generator, Optional, Any, Callable
-import random
 import time
+from typing import Dict, Generator, Iterable, List, Optional, TextIO
 
-import functools
+from algorithm import Algorithm, GenerationStep
+from algorithm.states import E, RESET, S
 
-from maze import Maze
-from algorithm import (
-    W,
-    S,
-    E,
-    N,
-    YELLOW,
-    PURPLE,
-    RESET,
-    UNDERLINE,
-    DIGIT_4,
-    DIGIT_2,
-    WIDTH,
-    HEIGHT,
-    WEIGHT,
-    SEED,
-    ANIMATE,
-    ENTRY,
-    EXIT,
-    OUTPUT_FILE,
-    PERFECT,
-    ALGORITHM,
-    TIME,
-    RED,
-    COLOR
-)
+BLOCK = "  "
+BG_WALL = "\033[48;5;255m"
+BG_EMPTY = "\033[48;5;232m"
+BG_PATTERN = "\033[48;5;250m"
+BG_PATH = "\033[48;5;214m"
+BG_ENTRY = "\033[48;5;93m"
+BG_EXIT = "\033[48;5;160m"
+BG_CURRENT = "\033[48;5;45m"
+FG_STATUS = "\033[38;5;250m"
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
+DISABLE_WRAP = "\033[?7l"
+ENABLE_WRAP = "\033[?7h"
+CLEAR_SCREEN = "\033[2J"
+CURSOR_HOME = "\033[H"
+ERASE_LINE_END = "\033[K"
+SYNC_BEGIN = "\033[?2026h"
+SYNC_END = "\033[?2026l"
+
+_PALETTES: List[Dict[str, str]] = [
+    {
+        "wall":    BG_WALL,
+        "empty":   BG_EMPTY,
+        "pattern": BG_PATTERN,
+        "path":    BG_PATH,
+        "entry":   BG_ENTRY,
+        "exit":    BG_EXIT,
+        "current": BG_CURRENT,
+    },
+    {
+        "wall":    "\033[48;5;24m",
+        "empty":   "\033[48;5;17m",
+        "pattern": "\033[48;5;31m",
+        "path":    "\033[48;5;46m",
+        "entry":   "\033[48;5;51m",
+        "exit":    "\033[48;5;196m",
+        "current": "\033[48;5;226m",
+    },
+    {
+        "wall":    "\033[48;5;130m",
+        "empty":   "\033[48;5;52m",
+        "pattern": "\033[48;5;94m",
+        "path":    "\033[48;5;220m",
+        "entry":   "\033[48;5;46m",
+        "exit":    "\033[48;5;201m",
+        "current": "\033[48;5;255m",
+    },
+    {
+        "wall":    "\033[48;5;69m",
+        "empty":   "\033[48;5;9m",
+        "pattern": "\033[48;5;244m",
+        "path":    "\033[48;5;255m",
+        "entry":   "\033[48;5;240m",
+        "exit":    "\033[48;5;666m",
+        "current": "\033[48;5;15m",
+    },
+]
+
+_palette_idx = 0
 
 
-class Animate:
+class AnsiAnimator:
+    """Render any maze algorithm without coupling rendering to generation."""
 
-    @staticmethod
-    def animate(output: str, char: str = '█', color: str = RESET) -> dict[str, str]:
-        """
-        receive standard output as str to generate maze fully
-        based on given data, works independently
-        """
-        height = 0
-        out_list = [item for item in output.split('\n')]
-        width = len(out_list[0])
-        for i, item in enumerate(out_list):
-            if item == '':
-                height = i
-                entry = out_list[i + 1]
-                exit = out_list[i + 2]
-                path = out_list[i + 3]
-                break
+    def __init__(
+        self,
+        delay: float = 0.02,
+        stream: Optional[TextIO] = None,
+    ) -> None:
+        """Store frame delay and destination terminal stream."""
+        self.delay = delay
+        self.stream = sys.stdout if stream is None else stream
 
-        entry = tuple(int(item) for item in entry.split(','))
-        exit = tuple(int(item) for item in exit.split(','))
-
-        path = Animate.__transfer_path(path, entry, exit)
-
-        init_animate = functools.partial(Animate.__display_maze, out_list, entry, exit, path, height, width, char, color=color)
-
-        display = init_animate()
-
-        buff_no_path = []
-        buff_path = []
-
-        for i in display:
-            buff_no_path.append(i)
-            print(i, end='', flush=True)
-            time.sleep(TIME)
-
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-        display = init_animate(show_path=True)
-        for i in display:
-            buff_path.append(i)
-            print(i, end='', flush=True)
-
-        return {'path': ''.join(buff_path), 'no_path': ''.join(buff_no_path)}
-
-    @staticmethod
-    def __transfer_path(path: str, entry: tuple, exit: tuple) -> list[tuple]:
-        """
-        changes path str to tuple of respective coordinates
-        """
-        buff = []
-        entry = list(entry)
-        for i in path:
-            match i:
-                case 'N':
-                    entry[1] -= 1
-                    buff.append((entry[0], entry[1]))
-                case 'E':
-                    entry[0] += 1
-                    buff.append((entry[0], entry[1]))
-                case 'S':
-                    entry[1] += 1
-                    buff.append((entry[0], entry[1]))
-                case 'W':
-                    entry[0] -= 1
-                    buff.append((entry[0], entry[1]))
-        if buff[-1] == exit:
-            return buff
-        raise ValueError("Path doesnt end at exit")
-
-    @staticmethod
-    def __display_maze(
-        out_list: list,
-        entry: tuple,
-        exit: tuple,
-        path: str,
-        height: int,
-        width: int,
-        char: str,
-        color: str = RESET,
-        show_path: bool = False
-            ) -> Generator[str, None, None]:
-
-        buff = " "
-        wall = color + char + RESET
-
-        for y in range(height):
-            for x in range(width):
-
-                if (x, y) in path and show_path and (x, y - 1) in path:
-                    buff = char
-                if Animate.isbit(int(out_list[y][x], 16), N):
-                    yield wall + wall
-                else:
-                    yield wall + buff
-                buff = " "
-
-            yield wall + '\n'
-
-            for x in range(width):
-
-                if (x, y) == entry:
-                    buff = f"{RED}{char}{RESET}"
-                elif (x, y) == exit:
-                    buff = f"{RED}{char}{RESET}"
-                elif (x, y) in path and show_path:
-                    buff = char
-
-                if Animate.isbit(int(out_list[y][x], 16), W):
-                    yield wall + buff
-                else:
-                    if (x, y) in path and show_path and (x - 1, y) in path or (x - 1, y) == entry:
-                        yield buff + buff
-                    else:
-                        yield " " + buff
-
-                buff = " "
-
-            yield wall + '\n'
-
-        yield wall * ((width * 2) + 1) + ' \n'
-
-    @staticmethod
-    def isbit(num: int, bit: int) -> bool:
-        return (num & bit) == bit
-
-    @staticmethod
-    def loop(data: dict[str, str], config: dict = None, color: list = None) -> None:
-        curr = data['no_path']
-        col = 0
-        while True:
-            print(
-                "\n==== A-Maze-ing ====\n"
-                "1. Regenerate maze\n"
-                "2. Toggle path\n"
-                "3. Rotate colours\n"
-                "4. Quit\n"
+    def frames(
+        self,
+        algorithm: Algorithm,
+        steps: Iterable[GenerationStep],
+    ) -> Generator[str, None, None]:
+        """Yield ANSI frames adapted to events from a maze algorithm."""
+        first_frame = True
+        for step in steps:
+            yield self._buffer_frame(
+                self.render(
+                    algorithm,
+                    current=step.current,
+                    action=step.action,
+                    show_path=False
+                ),
+                clear=first_frame,
+                hide_cursor=first_frame,
             )
-            choice = input("Choice (1-4): ").strip()
+            first_frame = False
 
-            os.system('cls' if os.name == 'nt' else 'clear')
+    def play(
+        self,
+        algorithm: Algorithm,
+        steps: Iterable[GenerationStep],
+    ) -> None:
+        """Print yielded ANSI frames and finish on the solved maze."""
+        wrote_frame = False
+        try:
+            for frame in self.frames(algorithm, steps):
+                self.stream.write(frame)
+                self.stream.flush()
+                wrote_frame = True
+                if self.delay:
+                    time.sleep(self.delay)
+            self.stream.write(
+                self._buffer_frame(
+                    self.render(algorithm, action="shortest path"),
+                    clear=not wrote_frame,
+                    hide_cursor=not wrote_frame,
+                )
+            )
+            self.stream.flush()
+        finally:
+            self.stream.write(
+                SYNC_END + ENABLE_WRAP + SHOW_CURSOR + RESET + "\n"
+            )
+            self.stream.flush()
 
-            match choice:
-                case '1':
-                    maze = Maze(config)
-                    maze.run()
-                    return
-                case '2':
-                    print(curr)
-                    if curr == data['path']:
-                        curr = data['no_path']
-                    else:
-                        curr = data['path']
-                case '3':
-                    global TIME
-                    save = TIME
-                    TIME = 0
-                    data = Animate.animate(config[OUTPUT_FILE], color=color[col])
-                    col = (col + 1) % 3
-                    TIME = save
-                    curr = data['no_path']
-                case '4':
-                    sys.exit()
+    @staticmethod
+    def render(
+        algorithm: Algorithm,
+        current: Optional[tuple] = None,
+        action: str = "",
+        show_path: bool = True,
+    ) -> str:
+        """Return one buffered, background-colored ANSI maze frame."""
+        rows = algorithm.height * 2 + 1
+        columns = algorithm.width * 2 + 1
+        canvas = [["wall" for _ in range(columns)] for _ in range(rows)]
 
+        for x, y in algorithm.cells():
+            center_x = x * 2 + 1
+            center_y = y * 2 + 1
+            canvas[center_y][center_x] = "empty"
+            if algorithm.passages[y][x] & E:
+                canvas[center_y][center_x + 1] = "empty"
+            if algorithm.passages[y][x] & S:
+                canvas[center_y + 1][center_x] = "empty"
 
-if __name__ == '__main__':
+        for x, y in algorithm.pattern:
+            canvas[y * 2 + 1][x * 2 + 1] = "pattern"
 
-    with open('output.txt', 'r') as f:
-        # try:
-        buff = f.read()
-        data = Animate.animate(buff, color=PURPLE)
-        while True:
-            Animate.loop(data, buff, color=COLOR)
-        # except Exception as e:
-            # print(e)
+        if show_path:
+            AnsiAnimator._draw_path(canvas, algorithm.path)
+        if current is not None:
+            x, y = current
+            canvas[y * 2 + 1][x * 2 + 1] = "current"
+        entry_x, entry_y = algorithm.entry
+        exit_x, exit_y = algorithm.exit
+        canvas[entry_y * 2 + 1][entry_x * 2 + 1] = "entry"
+        canvas[exit_y * 2 + 1][exit_x * 2 + 1] = "exit"
+
+        lines = [AnsiAnimator._render_row(row) for row in canvas]
+        status = "{}{} | {}{}".format(
+            FG_STATUS,
+            algorithm.name.upper(),
+            action,
+            RESET,
+        )
+        lines.append(status + ERASE_LINE_END)
+        return "\n".join(lines)
+
+    @staticmethod
+    def _buffer_frame(
+        frame: str,
+        clear: bool = False,
+        hide_cursor: bool = False,
+    ) -> str:
+        """Wrap one frame in synchronized terminal update controls."""
+        prefix = HIDE_CURSOR + DISABLE_WRAP if hide_cursor else ""
+        prefix += SYNC_BEGIN
+        if clear:
+            prefix += CLEAR_SCREEN
+        return prefix + CURSOR_HOME + frame + SYNC_END
+
+    @staticmethod
+    def _render_row(row: List[str]) -> str:
+        """Render one maze row while minimizing ANSI color transitions."""
+        parts = []
+        active = ""
+        for cell in row:
+            color = _PALETTES[_palette_idx][cell]
+            if color != active:
+                parts.append(color)
+                active = color
+            parts.append(BLOCK)
+        parts.append(RESET)
+        return "".join(parts)
+
+    @staticmethod
+    def _draw_path(canvas: List[List[str]], path: List[tuple]) -> None:
+        """Color path cells and the passages joining consecutive cells."""
+        for x, y in path:
+            canvas[y * 2 + 1][x * 2 + 1] = "path"
+        for first, second in zip(path, path[1:]):
+            between_x = first[0] + second[0] + 1
+            between_y = first[1] + second[1] + 1
+            canvas[between_y][between_x] = "path"
