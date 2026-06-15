@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 import random
 from typing import Deque, Dict, Generator, Iterable, List, Optional, Set
-from typing import Tuple
+from typing import Tuple, cast
 
 from .states import (
     DIRECTIONS,
@@ -49,11 +49,11 @@ class Algorithm(ABC):
     def __init__(self, config: Dict[str, object]) -> None:
         """Initialize a deterministic empty maze from validated config."""
         self.config = config
-        self.width = int(config[WIDTH])
-        self.height = int(config[HEIGHT])
-        self.entry = tuple(config[ENTRY])  # type: ignore[arg-type]
-        self.exit = tuple(config[EXIT])  # type: ignore[arg-type]
-        self.random = random.Random(int(config[SEED]))
+        self.width = cast(int, config[WIDTH])
+        self.height = cast(int, config[HEIGHT])
+        self.entry: Coordinate = cast(Coordinate, config[ENTRY])
+        self.exit: Coordinate = cast(Coordinate, config[EXIT])
+        self.random = random.Random(cast(int, config[SEED]))
         self.pattern = self._make_pattern()
         self.passages: PassageGrid = []
         self.path: List[Coordinate] = []
@@ -71,7 +71,7 @@ class Algorithm(ABC):
         ]
         self.path = []
         self.visited = set()
-        self.random.seed(int(self.config[SEED]))
+        self.random.seed(cast(int, self.config[SEED]))
 
     def steps(self) -> Generator[GenerationStep, None, None]:
         """Yield a complete perfect or imperfect maze generation."""
@@ -170,11 +170,11 @@ class Algorithm(ABC):
                     queue.append(neighbour)
         if self.exit not in parents:
             raise LogicError("Generated maze has no entrance-to-exit path.")
-        current: Optional[Coordinate] = self.exit
+        node: Optional[Coordinate] = self.exit
         reverse_path = []
-        while current is not None:
-            reverse_path.append(current)
-            current = parents[current]
+        while node is not None:
+            reverse_path.append(node)
+            node = parents[node]
         self.path = list(reversed(reverse_path))
         return self.path
 
@@ -248,11 +248,11 @@ class Algorithm(ABC):
                     queue.append(neighbour)
         if end not in parents:
             return []
-        current: Optional[Coordinate] = end
+        node: Optional[Coordinate] = end
         reverse_path = []
-        while current is not None:
-            reverse_path.append(current)
-            current = parents[current]
+        while node is not None:
+            reverse_path.append(node)
+            node = parents[node]
         return list(reversed(reverse_path))
 
     @staticmethod
@@ -301,11 +301,11 @@ class Algorithm(ABC):
                     queue.append(neighbour)
         if end not in parents:
             return []
-        current: Optional[Coordinate] = end
+        node: Optional[Coordinate] = end
         reverse_path = []
-        while current is not None:
-            reverse_path.append(current)
-            current = parents[current]
+        while node is not None:
+            reverse_path.append(node)
+            node = parents[node]
         return list(reversed(reverse_path))
 
     def _grid_bridges(self) -> Set[frozenset]:

@@ -2,9 +2,9 @@
 
 import random
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
-from algorithm import (
+from A_Maze_ing.algorithm import (
     ALGORITHM,
     ANIMATE,
     Algorithm,
@@ -33,9 +33,9 @@ REQUIRED_KEYS = (WIDTH, HEIGHT, ENTRY, EXIT)
 KNOWN_KEYS = set(DEFAULTS) | set(REQUIRED_KEYS)
 
 
-def parse_config(filepath: str) -> Dict[str, str]:
+def parse_config(filepath: str) -> Dict[str, object]:
     """Read key-value configuration text while ignoring comments."""
-    config = {}
+    config: Dict[str, object] = {}
     with open(filepath, "r", encoding="utf-8") as config_file:
         for raw_line in config_file:
             line = raw_line.split("#", 1)[0].strip()
@@ -88,19 +88,19 @@ def validate_config(raw_config: Dict[str, object]) -> Dict[str, object]:
         raise ValueError("Missing config keys: {}".format(", ".join(missing)))
 
     for key in (WIDTH, HEIGHT, WEIGHT):
-        config[key] = int(config[key])
-    if int(config[WIDTH]) < 2 or int(config[HEIGHT]) < 2:
+        config[key] = int(cast(str, config[key]))
+    if cast(int, config[WIDTH]) < 2 or cast(int, config[HEIGHT]) < 2:
         raise ValueError("WIDTH and HEIGHT must be at least 2.")
-    if not 1 <= int(config[WEIGHT]) <= 10:
+    if not 1 <= cast(int, config[WEIGHT]) <= 10:
         raise ValueError("WEIGHT must be between 1 and 10.")
 
     seed = config[SEED]
     config[SEED] = (
         random.SystemRandom().randrange(0, 2 ** 32)
         if seed is None
-        else int(seed)
+        else int(cast(str, seed))
     )
-    if int(config[SEED]) < 0:
+    if cast(int, config[SEED]) < 0:
         raise ValueError("SEED cannot be negative.")
 
     config[ANIMATE] = parse_bool(config[ANIMATE], ANIMATE)
@@ -110,10 +110,11 @@ def validate_config(raw_config: Dict[str, object]) -> Dict[str, object]:
     if config[ENTRY] == config[EXIT]:
         raise ValueError("ENTRY and EXIT must be different.")
 
-    width = int(config[WIDTH])
-    height = int(config[HEIGHT])
+    width = cast(int, config[WIDTH])
+    height = cast(int, config[HEIGHT])
     for key in (ENTRY, EXIT):
-        x, y = config[key]  # type: ignore[misc]
+        coord = cast(Tuple[int, int], config[key])
+        x, y = coord
         if not 0 <= x < width or not 0 <= y < height:
             raise ValueError("{} lies outside the maze.".format(key))
 
@@ -173,7 +174,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
     # ── state ──────────────────────────────────────────────────────────────
     show_path: bool = True
     palette_idx: int = 0
-    pattern_error: str = ""
+    pattern_error: str = ""  # Speichert die Fehlermeldung für das UI
 
     animator = AnsiAnimator(delay=0.02 if sys.stdout.isatty() else 0.0)
 
@@ -215,7 +216,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
             sys.stdout.write(
                 "\n\033[1m==== A-Maze-ing ====\033[0m\n"
                 "Seed: {seed}  |  Palette: {pal}/{total}\n"
-                "{err}"
+                "{err}"  # Platzhalter für die Fehlermeldung
                 "\n"
                 "1. Regenerate (same seed)\n"
                 "2. Regenerate (new seed)\n"
@@ -239,13 +240,14 @@ def interactive_menu(config: Dict[str, object]) -> None:
                 algorithm = _rebuild()
 
             elif choice == "2":
-                new_seed = (int(config[SEED]) + 1) % (2 ** 32)
+                new_seed = (cast(int, config[SEED]) + 1) % (2 ** 32)
                 algorithm = _rebuild(new_seed=new_seed)
 
             elif choice == "3":
                 show_path = not show_path
 
             elif choice == "4":
+                # Unser sauberer Index-Fix bleibt erhalten!
                 palette_idx = (palette_idx + 1) % len(_PALETTES)
                 _animate_module._palette_idx = palette_idx
 
@@ -253,6 +255,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
                 running = False
 
     finally:
+        # Always restore the normal screen and cursor on exit
         sys.stdout.write("\033[?1049l\033[?25h" + RESET + "\n")
         sys.stdout.flush()
         print("Goodbye!")

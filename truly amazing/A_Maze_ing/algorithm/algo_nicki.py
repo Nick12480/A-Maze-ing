@@ -1,6 +1,6 @@
 """Sidewinder maze generator with obstacle-aware connectivity repair."""
 
-from typing import Dict, Generator, List, Tuple
+from typing import Dict, Generator, List, Tuple, cast
 
 from .base import Algorithm, Coordinate, GenerationStep
 from .states import E, N, WEIGHT
@@ -39,7 +39,7 @@ class Sidewinder(Algorithm):
     def generate(self) -> Generator[GenerationStep, None, None]:
         """Carve Sidewinder runs, then join obstacle-separated forests."""
         self.visited = set()
-        weight = int(self.config[WEIGHT])
+        weight = cast(int, self.config[WEIGHT])
 
         for y in range(self.height):
             run: List[Coordinate] = []
