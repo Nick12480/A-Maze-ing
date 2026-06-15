@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
 import random
-from typing import Deque, Dict, Generator, Iterable, List, Optional, Set
+from typing import Deque, Dict, Generator, Iterable, List, Optional, Set, FrozenSet
 from typing import Tuple, cast
 
 from .states import (
@@ -256,10 +256,10 @@ class Algorithm(ABC):
         return list(reversed(reverse_path))
 
     @staticmethod
-    def _edge_set(path: List[Coordinate]) -> Set[frozenset]:
+    def _edge_set(path: List[Coordinate]) -> Set[FrozenSet]:
         """Convert an ordered path into an unordered set of its edges."""
         return {
-            frozenset((path[index], path[index + 1]))
+            FrozenSet((path[index], path[index + 1]))
             for index in range(len(path) - 1)
         }
 
@@ -308,12 +308,12 @@ class Algorithm(ABC):
             node = parents[node]
         return list(reversed(reverse_path))
 
-    def _grid_bridges(self) -> Set[frozenset]:
+    def _grid_bridges(self) -> Set[FrozenSet]:
         """Return bridge edges in the full usable grid without recursion."""
         discovered: Dict[Coordinate, int] = {}
         low: Dict[Coordinate, int] = {}
         parent: Dict[Coordinate, Optional[Coordinate]] = {}
-        bridges: Set[frozenset] = set()
+        bridges: Set[FrozenSet] = set()
         index = 0
 
         for root in self.cells():

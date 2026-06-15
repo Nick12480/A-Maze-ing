@@ -2,7 +2,7 @@
 
 import sys
 import time
-from typing import Dict, Generator, Iterable, List, Optional, TextIO
+from typing import Dict, Generator, Iterable, List, Optional, TextIO, Tuple
 
 from algorithm import Algorithm, GenerationStep
 from algorithm.states import E, RESET, S
@@ -131,7 +131,7 @@ class AnsiAnimator:
     @staticmethod
     def render(
         algorithm: Algorithm,
-        current: Optional[tuple] = None,
+        current: Optional[Tuple] = None,
         action: str = "",
         show_path: bool = True,
     ) -> str:
@@ -200,7 +200,7 @@ class AnsiAnimator:
         return "".join(parts)
 
     @staticmethod
-    def _draw_path(canvas: List[List[str]], path: List[tuple]) -> None:
+    def _draw_path(canvas: List[List[str]], path: List[Tuple]) -> None:
         """Color path cells and the passages joining consecutive cells."""
         for x, y in path:
             canvas[y * 2 + 1][x * 2 + 1] = "path"
