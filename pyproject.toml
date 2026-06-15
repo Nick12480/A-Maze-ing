@@ -1,10 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "a-maze-ing"
 version = "0.1.0"
-description = "Add your description here"
+description = "A_Maze_ing project package"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "flake8>=7.3.0",
     "mypy>=2.1.0",
 ]
+
+[tool.setuptools]
+package-dir = {"" = "A_Maze_ing"}
+
+[tool.setuptools.packages.find]
+where = ["A_Maze_ing"]

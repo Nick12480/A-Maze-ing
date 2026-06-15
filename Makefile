@@ -25,12 +25,13 @@ lint:
 	$(FLAKE8) $(FLAKE8_FLAGS) .
 	$(MYPY) . $(MYPY_FLAGS)
 
-lint-strict:
-	$(FLAKE8) $(FLAKE8_FLAGS) .
-	$(MYPY) . --strict
-
 clean:
 	rm -rf .mypy_cache .pytest_cache
+	rm -rf output_maze.txt
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +
+
+package:
+	uv tool install build
+	uv build
 
 .PHONY: all install run test lint validate clean

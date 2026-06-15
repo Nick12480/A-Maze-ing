@@ -183,7 +183,7 @@ def interactive_menu(config: Dict[str, object]) -> None:
         nonlocal pattern_error
         if new_seed is not None:
             config[SEED] = new_seed
-        algorithm = Maze(config).create()
+        algorithm: Algorithm = Maze(config).create()
 
         if not algorithm.pattern:
             pattern_error = ("\033[31m[ERROR] Maze size too small:"
@@ -286,24 +286,28 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         if interactive:
             interactive_menu(config)
-            return 0
 
-        maze = Maze(config)
-        algorithm = maze.create()
-        if bool(config[ANIMATE]):
-            delay = 0.02 if sys.stdout.isatty() else 0.0
-            AnsiAnimator(delay=delay).play(algorithm, algorithm.steps())
-            output_file = str(config[OUTPUT_FILE])
-            if output_file:
-                algorithm.write_output(output_file)
-        else:
+            maze = Maze(config)
+            algorithm = maze.create()
             algorithm.run()
-            print_final(algorithm)
+        else:
+            maze = Maze(config)
+            algorithm = maze.create()
+            if bool(config[ANIMATE]):
+                delay = 0.02 if sys.stdout.isatty() else 0.0
+                AnsiAnimator(delay=delay).play(algorithm, algorithm.steps())
+            else:
+                algorithm.run()
+                print_final(algorithm)
+
+        output_file = str(config[OUTPUT_FILE])
+        if output_file:
+            algorithm.write_output(output_file)
+        return 0
 
     except (LogicError, OSError, TypeError, ValueError) as error:
         print("Error: {}".format(error), file=sys.stderr)
         return 1
-    return 0
 
 
 if __name__ == "__main__":
